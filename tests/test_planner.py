@@ -2,10 +2,22 @@
 
 from __future__ import annotations
 
+import json
 from datetime import date
 
 from meal_planner.pantry import Pantry
 from meal_planner.planner import MealPlanner
+
+
+class FakeClient:
+    """Records the temperature passed to chat_content and returns a tiny plan."""
+
+    def __init__(self) -> None:
+        self.last_temperature: float | None = None
+
+    def chat_content(self, messages: list[dict[str, str]], temperature: float = 0.7) -> str:
+        self.last_temperature = temperature
+        return json.dumps({"week_start": "2026-11-02", "days": []})
 
 
 def test_generate_plan(client):
@@ -66,3 +78,15 @@ def test_multiple_days(client):
         "2026-11-03",
         "2026-11-04",
     ]
+
+
+def test_temperature_is_passed_to_client():
+    fake = FakeClient()
+    planner = MealPlanner(client=fake, pantry=Pantry(ingredients=["eggs"]))
+    planner.generate(days=1, temperature=0.3)
+    assert fake.last_temperature == 0.3
+
+    fake2 = FakeClient()
+    planner2 = MealPlanner(client=fake2, pantry=Pantry(ingredients=["eggs"]))
+    planner2.generate()  # default temperature
+    assert fake2.last_temperature == 0.7

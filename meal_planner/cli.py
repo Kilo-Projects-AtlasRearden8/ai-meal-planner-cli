@@ -71,7 +71,12 @@ def _cmd_plan(args: argparse.Namespace) -> int:
     pantry = Pantry.load(args.pantry)
     week_start = date.fromisoformat(args.week_start) if args.week_start else None
     planner = MealPlanner(client=client, pantry=pantry)
-    plan = planner.generate(days=days, week_start=week_start, preferences=args.preferences)
+    plan = planner.generate(
+        days=days,
+        week_start=week_start,
+        preferences=args.preferences,
+        temperature=args.temperature,
+    )
     export_json(plan, args.output)
     print(f"Saved plan to {args.output}")
     if args.markdown:
@@ -141,14 +146,18 @@ def _cmd_config(args: argparse.Namespace) -> int:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    if args.command == "plan":
-        return _cmd_plan(args)
-    if args.command == "grocery-list":
-        return _cmd_grocery_list(args)
-    if args.command == "pantry":
-        return _cmd_pantry(args)
-    if args.command == "config":
-        return _cmd_config(args)
+    try:
+        if args.command == "plan":
+            return _cmd_plan(args)
+        if args.command == "grocery-list":
+            return _cmd_grocery_list(args)
+        if args.command == "pantry":
+            return _cmd_pantry(args)
+        if args.command == "config":
+            return _cmd_config(args)
+    except Exception as exc:  # noqa: BLE001 - friendly CLI error instead of traceback
+        print(f"Error: {exc}")
+        return 1
     parser.print_help()
     return 1
 

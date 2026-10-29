@@ -90,6 +90,7 @@ class MealPlanner:
         days: int = 7,
         week_start: date | None = None,
         preferences: str = "",
+        temperature: float = 0.7,
     ) -> dict[str, Any]:
         start = week_start or date.today()
         pantry_list = ", ".join(self.pantry.ingredients) or "(none)"
@@ -103,7 +104,7 @@ class MealPlanner:
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": user},
         ]
-        content = self.client.chat_content(messages, temperature=0.7)
+        content = self.client.chat_content(messages, temperature=temperature)
         raw = _extract_json(content)
         plan = _normalize_plan(raw, start)
         plan["pantry"] = list(self.pantry.ingredients)
